@@ -1,0 +1,1 @@
+catlog = ['testdata_plgs', '-', 'HD Segment Demo', 'Move Detect Demo']
