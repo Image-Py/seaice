@@ -1,0 +1,1 @@
+Moving Detect>None
