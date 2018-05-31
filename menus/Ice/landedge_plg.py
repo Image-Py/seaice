@@ -56,7 +56,7 @@ class Add2Manager(Simple):
     title = 'Add To Geo Manager'
     note = ['all', 'req_roi']
     para = {'name':''}
-    view = [(str, 'Name', 'name', '')]
+    view = [(str,'name',  'Name', '')]
 
     def check(self, ips):
         if not Simple.check(self, ips): return False
@@ -87,7 +87,7 @@ class LoadRoi(Simple):
             IPy.alert('No roi in manager!')
             return False
         self.para['name'] = titles[0]
-        LoadRoi.view = [(list, titles, str, 'Name', 'name', '')]
+        LoadRoi.view = [(list,'name', titles, str, 'Name',  '')]
         return True
 
     def run(self, ips, imgs, para = None):

@@ -1,7 +1,8 @@
 import gdal
 from imagepy.core.util import fileio
 from imagepy.core.engine import Simple
-from imagepy import IPy, ImagePlus
+from imagepy import IPy
+from imagepy.core import ImagePlus
 from imagepy.core.manager import WindowsManager
 import os
 import scipy.ndimage as nimg
@@ -52,7 +53,7 @@ class DuplicatePrj(Simple):
     
     def load(self, ips):
         self.para['name'] = ips.title+'-copy'
-        self.view = [(str, 'Name', 'name','')]
+        self.view = [(str, 'name','Name', '')]
         return True
     #process
     def run(self, ips, imgs, para = None):
@@ -86,7 +87,7 @@ class Match(Simple):
     note = ['all']
     para = {'temp':None}
     
-    view = [('img', 'template', 'temp', '')]
+    view = [('img', 'temp','template',  '')]
 
     def run(self, ips, imgs, para = None):
         ips2 = WindowsManager.get(para['temp']).ips

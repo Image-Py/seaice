@@ -7,7 +7,7 @@ import numpy as np
 from numpy.linalg import norm
 from imagepy import IPy
 from skimage.feature import match_descriptors, ORB
-
+import pandas as pd
 #CVSURF = cv2.xfeatures2d.SURF_create if cv2.__version__[0] =="3" else cv2.SURF
 
 def anglex(x, y):
@@ -59,9 +59,9 @@ class Plugin(Simple):
     #parameter
     para = {'ds':10, 'sigma':3, 'std':1}
 
-    view = [(int, (1, 1000), 0, 'simple', 'ds', ''),
-            (int, (1, 10), 0, 'sigma', 'sigma', 'pix'),
-            (int, (1, 5), 0, 'Std', 'std', 'tor')]
+    view = [(int, 'ds',(1, 1000), 0, 'simple',  ''),
+            (int, 'sigma',(1, 10), 0, 'sigma',  'pix'),
+            (int,'std',(1, 5), 0, 'Std',  'tor')]
 
     #process
     def run(self, ips, imgs, para = None):
@@ -92,5 +92,6 @@ class Plugin(Simple):
         data.append(['--']*6)
         ips.mark = Mark(mats, imgs[0].shape)
         titles = ['KX','RX','OffX','RY','KY','OffY']
-        IPy.table(ips.title+'-moveing', data, titles)
+        # IPy.table(ips.title+'-moveing', data, titles)
+        IPy.show_table(pd.DataFrame(data, columns=titles),ips.title+'-moveing')
 

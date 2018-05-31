@@ -1,4 +1,5 @@
-from imagepy import IPy, ImagePlus
+from imagepy import IPy
+from imagepy.core import ImagePlus
 import wx
 import numpy as np
 from imagepy.core.engine import Simple, Free
@@ -14,7 +15,7 @@ from matplotlib.collections import PatchCollection
 import matplotlib.font_manager as fm
 from wx.lib.pubsub import pub
 import osr, gdal, ogr
-
+import pandas as pd
 def showicehist(areas):
     plt.figure('Ice Histogram')
     ax = plt.gca()
@@ -53,7 +54,8 @@ class IceStatic(Simple):
             line = [i, polygon.area, polygon.centroid.x, polygon.centroid.y]
             data.append([round(j) for j in line])
 
-        IPy.table(ips.title+'-region', data, ['ID', 'Area', 'Center-X', 'Center-Y'])
+        # IPy.table(ips.title+'-region', data, ['ID', 'Area', 'Center-X', 'Center-Y'])
+        IPy.show_table(pd.DataFrame(data, columns=['ID', 'Area', 'Center-X', 'Center-Y']), ips.title+'-region')
         wx.CallAfter(pub.sendMessage, 'showicehist', areas=[i[1] for i in data])
 
 class ShapeWriter(Simple):
@@ -114,7 +116,7 @@ class ShowResult(Simple):
     title = 'Show Ice Result'
     note = ['8-bit']
     para = {'title':'海冰分布图  2017-00-00 00:00:00'}
-    view = [(str, 'title', 'title', '')]
+    view = [(str,'title', 'title',  '')]
 
     #process
     def run(self, ips, imgs, para = None):
@@ -145,7 +147,7 @@ class Difference(Simple):
     note = ['8-bit']
     para = {'temp':None}
     
-    view = [('img', 'object', 'temp', '')]
+    view = [('img', 'temp', 'object', '')]
 
     def run(self, ips, imgs, para = None):
         ips2 = WindowsManager.get(para['temp']).ips
