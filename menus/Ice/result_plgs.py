@@ -16,6 +16,7 @@ import matplotlib.font_manager as fm
 from wx.lib.pubsub import pub
 import osr, gdal, ogr
 import pandas as pd
+
 def showicehist(areas):
     plt.figure('Ice Histogram')
     ax = plt.gca()
@@ -91,6 +92,25 @@ class ShapeWriter(Simple):
             shapLayer.CreateFeature(feature)
             feature.Destroy()
 
+class WKTWriter(Simple):
+    title = 'Export To WKT'
+    note = ['8-bit']
+
+    #process
+    def run(self, ips, imgs, para = None):
+        folder = IPy.getpath('Export WKT', 'files (*.wkt)|*.wkt', 'save')
+        if folder==None: return
+        conts = find_contours(ips.img, 1e-6, fully_connected='low', positive_orientation='low')
+        trans = np.array(ips.info['trans']).reshape((2,3))
+        f = open(folder, 'w')
+        for i in range(len(conts)):
+            cur = conts[i][:,::-1]
+            jw = np.dot(trans[:,1:], cur.T).T+ trans[:,0]
+            polygon = Polygon(jw)
+            f.write(polygon.wkt)
+            f.write('\n')
+        f.close()
+
 def showice(img, ices, areas, para):
     plt.figure('Ice Segment')
     plt.imshow(img)
@@ -158,4 +178,4 @@ class Difference(Simple):
         ips.info = ips2.info
         IPy.show_ips(ips)
 
-plgs = [Difference, IceStatic, ShowResult, ShapeWriter]
+plgs = [Difference, IceStatic, ShowResult, ShapeWriter, WKTWriter]
