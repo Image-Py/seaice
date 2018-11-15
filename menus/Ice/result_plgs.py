@@ -49,8 +49,12 @@ class IceStatic(Simple):
         data = []
         for i in range(len(conts)):
             cur = conts[i][:,::-1]
+            #将像素点坐标转换成经纬度
             jw = np.dot(trans[:,1:], cur.T).T+ trans[:,0]
+            #进行仿射变换
             xy = ct.TransformPoints(jw)
+            print(xy)
+            #用shaply库计算面积 坐标
             polygon = Polygon(xy)
             line = [i, polygon.area, polygon.centroid.x, polygon.centroid.y]
             data.append([round(j) for j in line])
