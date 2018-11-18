@@ -9,6 +9,7 @@ import gdal
 import wx
 from skimage.draw import polygon 
 from scipy.stats import linregress
+import pandas as pd
 def pix2jw(trans,point):
     point=np.array(point)
     return np.dot(trans[:,1:], point.T).T+ trans[:,0]
@@ -19,18 +20,13 @@ def jw2pix(trans,jw):
     return point
 def build_grid(jw1,jw2,interval):
     x, y = np.meshgrid(np.arange(min(jw1),max(jw1),interval[0]), np.arange(min(jw2),max(jw2),interval[1]))
+    shape=x.shape
     x, y = x.flatten(), y.flatten()
     points = np.vstack((x,y)).T
-    return points
+    return points,shape
 def jw2polygon(trans,jw_data,interval):
     polygon_data=np.array([np.vstack((i,i,i,i))+np.array([[0,0],[0,interval[1]],interval,[interval[0],0]]) for i in jw_data])
     return polygon_data
-# def draw_polygon(polygon,ax):
-#     # for i in polygon:print(i,'#')
-#     polygon_data=[Polygon(i, True) for i in polygon]
-#     # print('####',polygon_data)
-#     p = PatchCollection(polygon_data, cmap=plt.cm.jet, alpha=0.4)
-#     ax.add_collection(p)
 def get_mask(img,polygon_data):
     shape=img.shape
     msk=np.zeros(shape)
@@ -69,15 +65,17 @@ class Setting(Tool):
             print(slope,ips.gray_data,intercept)
             # thick_out=ips.gray_data*slope+intercept
             thick_out=ips.gray_data*np.array(slope)+np.array(intercept)
-            print(thick_out)
+            thick_out=thick_out.reshape(ips.grid_shape)[::-1,:]
+            # print(thick_out.reshape(ips.grid_shape))
+            IPy.show_table(pd.DataFrame(thick_out),title='temp')
             return 
         index,i=self.pick(ips, x, y, btn)
         if index:
             # print(x,y,i)
-            pd = NewTool()
-            pd.parent,pd.index=self,i
-            pd.ips=ips
-            pd.start()  
+            pd1 = NewTool()
+            pd1.parent,pd1.index=self,i
+            pd1.ips=ips
+            pd1.start()  
         else:print(self.thick)
     def pick(self, ips, x, y, btn, **key):
         lim=3
@@ -118,18 +116,14 @@ class DrawGrid(Simple):
     # def load(self, ips):pass
     def run(self, ips, imgs, para = None):
         trans = np.array(ips.info['trans']).reshape((2,3))
-        # print('in')
-        # jw1,jw2=trans[:,0],pix2jw(trans,(800,600))
 
         jw1,jw2=(self.para['longtitude_min'],self.para['longtitude_max']),(self.para['latitude_min'],self.para['latitude_max'])
         interval=(self.para['latitude_inter'],self.para['longtitude_inter'])
         # print(jw1,jw2)
-        jw_data=build_grid(jw1,jw2,interval)
+        jw_data,ips.grid_shape=build_grid(jw1,jw2,interval)
         polygon_data=jw2pix(trans,jw2polygon(trans,jw_data,interval))
         ips.data=polygon_data
-        # print([(ips.imgs[0],i) for i in polygon_data])
         ips.gray_data=[get_gray(ips.imgs[0].copy(),i) for i in polygon_data]
-        # print(ips.gray_data)
 
         mark =  {'type':'layers', 'body':{}}
         layer = {'type':'layer', 'body':[]}
