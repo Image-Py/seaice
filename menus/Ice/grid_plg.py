@@ -10,6 +10,8 @@ import wx
 from skimage.draw import polygon 
 from scipy.stats import linregress
 import pandas as pd
+from wx.lib.pubsub import pub
+import matplotlib.pyplot as plt
 def pix2jw(trans,point):
     point=np.array(point)
     return np.dot(trans[:,1:], point.T).T+ trans[:,0]
@@ -40,6 +42,14 @@ def get_gray(img,polygon_data):
     img*=msk
     gray=img[img>0].mean()
     return gray
+def lineregress_plot(para):
+
+    data,slope,intercept=para
+    print(data)
+    plt.plot(data[:,0],data[:,1], 'ro')
+    plt.plot(data[:,0],slope*data[:,0]+intercept)
+    plt.show()
+pub.subscribe(lineregress_plot, 'lineregress_plot')
 class NewTool(Simple):
     para = {'thickness':0}
     view = [(float, 'thickness', (0,1000), 3, 'thickness', 'pix'),]
@@ -68,6 +78,7 @@ class Setting(Tool):
             thick_out=thick_out.reshape(ips.grid_shape)[::-1,:]
             # print(thick_out.reshape(ips.grid_shape))
             IPy.show_table(pd.DataFrame(thick_out),title='temp')
+            wx.CallAfter(pub.sendMessage, 'lineregress_plot', para=(np.array(list(self.thick.values())),slope,intercept))
             return 
         index,i=self.pick(ips, x, y, btn)
         if index:
@@ -102,7 +113,7 @@ class Setting(Tool):
         return slope,intercept
 class DrawGrid(Simple):
     title = 'Draw Grid'
-    note = ['8-bit']
+    note = ['8-bit', 'preview']
     view = [(float, 'longtitude_max', (-180,180), 8, 'longtitude_max', 'degree'),
             (float, 'longtitude_min', (-180,180), 8, 'longtitude_min', 'degree'),
             (float, 'latitude_max',(-90,90), 8, 'latitude_max', 'degree'),            
@@ -114,7 +125,10 @@ class DrawGrid(Simple):
     para = {'longtitude_max':122.34921875, 'longtitude_min':120.10546875,'latitude_max':40.98600002,'latitude_min':39.73600008,
     'latitude_inter':0.100,'longtitude_inter':0.100}
     # def load(self, ips):pass
-    def run(self, ips, imgs, para = None):
+    def preview(self, ips, para):
+        print('preview')
+        self.run(ips)
+    def run(self, ips, imgs=None, para = None):
         trans = np.array(ips.info['trans']).reshape((2,3))
 
         jw1,jw2=(self.para['longtitude_min'],self.para['longtitude_max']),(self.para['latitude_min'],self.para['latitude_max'])
