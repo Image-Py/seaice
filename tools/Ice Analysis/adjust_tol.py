@@ -4,12 +4,13 @@ from imagepy.core.engine import Tool, Filter,Simple
 import scipy.ndimage as nimg
 from imagepy.core.mark import GeometryMark
 from .circle import Circle
-
-from imagepy import IPy
-from imagepy.core import ImagePlus
 from scipy import interpolate
-from imagepy.core import myvi
-
+def interpolat(x,y,z,shape):
+    y1,x1=shape
+    func=interpolate.interp2d(x, y, z, kind='cubic')
+    xnew, ynew = np.linspace(0,x1,x1), np.linspace(0,y1,y1)
+    znew=func(xnew,ynew)
+    return znew
 class Plugin(Circle):
     title = 'adjust'
     note = ['8-bit', 'auto_snap']
@@ -34,7 +35,9 @@ class Plugin(Circle):
     def bulid_data(self,shape,data):
         z=data[1].astype(np.float64)
         data=np.array([list(i) for i in data[0]])
-        x,y,weight=data[:,1],data[:,0],data[:,2]
-        tck = interpolate.bisplrep(x, y, z, w=weight,kx=2,ky=2)
-        znew = interpolate.bisplev(np.arange(shape[0]),np.arange(shape[1]), tck)
+        x,y,weight=data[:,0],data[:,1],data[:,2]
+        znew = interpolat(x, y, z,shape)
+
+
+        # znew = interpolate.bisplev(np.arange(shape[0]),np.arange(shape[1]), tck)
         return znew.astype(int)
