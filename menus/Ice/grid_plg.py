@@ -81,10 +81,8 @@ class DrawGrid(Simple):
         self.draw_grid(ips)
     def run(self, ips, imgs=None, para = None):
         gray_data=self.draw_grid(ips)
-        map=TableManager.get(self.para['map1']).data.values[1,:].astype('uint8')
-        print('map',map)
-        print('gray_data',gray_data)
-        thick=map[gray_data]*(gray_data>0)
+        map=TableManager.get(self.para['map1']).data.values[1,:]
+        thick=map[gray_data.astype(int)]
         IPy.show_table(pd.DataFrame(thick),title='thick')
     def draw_grid(self,ips):
         print('data',ips.data)
@@ -94,8 +92,8 @@ class DrawGrid(Simple):
         jw_data,shape=build_grid(jw1,jw2,interval)
         polygon_data=jw2pix(trans,jw2polygon(trans,jw_data,interval))
         # ips.data=polygon_data
-        gray_data=np.array([get_gray(ips.imgs[0].copy(),i) for i in polygon_data]).reshape(shape)[::-1,:].astype('uint8')
-        # print('shape',gray_data.shape)
+        gray_data=np.array([get_gray(ips.imgs[0].copy(),i) for i in polygon_data]).reshape(shape)[::-1,:]
+        print('shape',gray_data.shape)
 
         mark =  {'type':'layers', 'body':{}}
         layer = {'type':'layer', 'body':[]}
