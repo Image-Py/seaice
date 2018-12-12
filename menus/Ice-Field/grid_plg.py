@@ -79,11 +79,13 @@ class DrawGrid(Simple):
     def preview(self, ips, para):
         print('preview')
         self.draw_grid(ips)
+        
     def run(self, ips, imgs=None, para = None):
         gray_data=self.draw_grid(ips)
         map=TableManager.get(self.para['map1']).data.values[1,:]
         thick=map[gray_data.astype(int)]
         IPy.show_table(pd.DataFrame(thick),title='thick')
+
     def draw_grid(self,ips):
         print('data',ips.data)
         trans = np.array(ips.info['trans']).reshape((2,3))

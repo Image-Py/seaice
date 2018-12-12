@@ -11,7 +11,7 @@ from numpy.linalg import inv
 
 class Open(fileio.Reader):
 	title = 'Geo TIF Open'
-	filt = ['TIF']
+	filt = ['TIF', 'TIFF']
 
 	#process
 	def run(self, para = None):
@@ -29,7 +29,7 @@ class Open(fileio.Reader):
 		
 class Save(fileio.Writer):
     title = 'Geo TIF Save'
-    filt = ['TIF']
+    filt = ['TIF', 'TIFF']
 
     #process
     def run(self, ips, imgs, para = None):
