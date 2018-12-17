@@ -27,7 +27,7 @@ class GridValue(Simple):
 
     def grid(slef, ips, para):
         lons = np.arange(para['longtitude_min'], para['longtitude_max'], para['longtitude_inter'])
-        lats = np.arange(para['latitude_min'], para['latitude_max'], para['latitude_inter'])
+        lats = np.arange(para['latitude_min'], para['latitude_max'], para['latitude_inter'])[::-1]
         trans = np.array(ips.info['trans']).reshape((2,3))
         lines = []
         jw2pix = lambda trans, i : np.dot(i-trans[:,0], np.linalg.inv(trans[:,1:]))
@@ -57,6 +57,7 @@ class GridValue(Simple):
             for pts in line:
                 msk = polygon(* np.array(pts).T[::-1], shape=imgs[0].shape[:2])
                 mjd.append(ips.img[msk[0], msk[1]].mean())
+                ips.img[msk[0], msk[1]] = 0
         data = np.array(mjd).reshape((len(lines), len(lines[0])))
         IPy.show_table(pd.DataFrame(data), title=ips.title+'-Concentraion')
 
