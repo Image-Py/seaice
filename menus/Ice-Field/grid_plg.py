@@ -21,7 +21,7 @@ class GridValue(Simple):
             (float, 'latitude_inter',(0,100), 3, 'latitude_inter', 'degree'),
             (float, 'longtitude_inter',(0,100), 3, 'longtitude_inter', 'degree')]
             # (float, 'e', (-100,100), 1, 'eccentricity', 'ratio')
-    para = {'longtitude_max':124.5, 'longtitude_min':117.5,'latitude_max':40,
+    para = {'longtitude_max':124.5, 'longtitude_min':117.5,'latitude_max':41,
         'latitude_min':37, 'latitude_inter':0.100,'longtitude_inter':0.100}
     # def load(self, ips):pass
 
@@ -58,6 +58,6 @@ class GridValue(Simple):
                 msk = polygon(* np.array(pts).T[::-1], shape=imgs[0].shape[:2])
                 mjd.append(ips.img[msk[0], msk[1]].mean())
         data = np.array(mjd).reshape((len(lines), len(lines[0])))
-        IPy.show_table(pd.DataFrame(data), title=ips.title+'-mjd')
+        IPy.show_table(pd.DataFrame(data), title=ips.title+'-Concentraion')
 
 plgs = [GridValue]

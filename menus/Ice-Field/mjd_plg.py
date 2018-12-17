@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from imagepy import IPy
 
-class Av(Simple):
-    title = 'Count Av'
+class Reflectivity(Simple):
+    title = 'Reflectivity'
     note = ['rgb', 'not_chanels']
     para = {'cn1':0.372, 'cn3':0.436, 'cn4':0.227}
     view = [(float, 'cn1', (0,1), 3, 'channel 1', '620—670 um'),
@@ -19,12 +19,12 @@ class Av(Simple):
         cn1, cn3, cn4 = para['cn1'], para['cn3'], para['cn4']
         Av = (r * cn1 + b * cn3 + g * cn4).T
         Av = np.clip(Av, 0, 155).astype(np.uint8)
-        av_ips = ImagePlus([Av.astype(np.uint8)], ips.title + '-Av')
+        av_ips = ImagePlus([Av.astype(np.uint8)], ips.title + '-Reflectivity')
         av_ips.info = ips.info
         IPy.show_ips(av_ips)
 
-class Mjd(Filter):
-    title = 'Count Mjd'
+class Concentraion(Filter):
+    title = 'Concentraion'
     note = ['8-bit', 'auto_snap', 'preview']
     para = {'water':0.04, 'ice':0.29}
     view = [('slide', 'water', (0,1), 3, 'pure water'),
@@ -37,7 +37,7 @@ class Mjd(Filter):
 
 class Show(Simple):
     asyn = False
-    title = 'Show Mjd'
+    title = 'Show Concentraion'
     note = ['8-bit']
     para = {'title':'密集度  2017-00-00 00:00:00'}
     view = [(str,'title', 'title',  '')]
@@ -52,4 +52,4 @@ class Show(Simple):
         plt.title(para['title'], fontproperties=myfont, size=24)
         plt.show()
 
-plgs = [Av, Mjd, Show]
+plgs = [Reflectivity, Concentraion, Show]
