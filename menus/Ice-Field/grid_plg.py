@@ -4,109 +4,60 @@ from imagepy.core.engine import Simple, Filter,Tool,Table
 from imagepy.core.manager import ImageManager,TableManager
 from imagepy.core.mark import GeometryMark
 from imagepy.core import ImagePlus
-# import pandas as pd
 import gdal
 import wx
 from skimage.draw import polygon 
 from scipy.stats import linregress
 import pandas as pd
 import matplotlib.pyplot as plt
-def pix2jw(trans,point):
-    point=np.array(point)
-    return np.dot(trans[:,1:], point.T).T+ trans[:,0]
-def jw2pix(trans,jw):
-    #求出逆矩阵
-    inv=np.linalg.inv(trans[:,1:])
-    point=np.dot(jw-trans[:,0],inv)
-    return point
-# def build_grid(jw1,jw2,interval):
-#     x, y = np.meshgrid(np.arange(min(jw1[0],jw2[0]),max(jw1[0],jw2[0]),interval[0]), np.arange(min(jw1[1],jw2[1]),max(jw1[1],jw2[1]),interval[1]))
-#     grid_shape=y.shape
-#     x, y = x.flatten(), y.flatten()
-#     points = np.vstack((x,y)).T
-#     points=points.reshape((grid_shape[0],grid_shape[1],2))
-#     return points
-def build_grid(jw1,jw2,interval):
-    x, y = np.meshgrid(np.arange(min(jw1),max(jw1),interval[0]), np.arange(min(jw2),max(jw2),interval[1]))
-    shape=x.shape
-    x, y = x.flatten(), y.flatten()
-    points = np.vstack((x,y)).T
-    return points,shape
-def jw2polygon(trans,jw_data,interval):
-    polygon_data=np.array([np.vstack((i,i,i,i))+np.array([[0,0],[0,interval[1]],interval,[interval[0],0]]) for i in jw_data])
-    return polygon_data
-def get_mask(img,polygon_data):
-    shape=img.shape
-    msk=np.zeros(shape)
-    r = polygon_data[:,1]
-    c = polygon_data[:,0]
-    rr, cc = polygon(r, c)
-    msk[rr, cc] = 1
-    return msk.astype('uint8')
-def get_gray(img,polygon_data):
-    msk=get_mask(img,polygon_data)
-    img*=msk
-    gray=img[img>0].mean()
-    return gray
-# class Statistic(Table):
-#     title = 'Table Statistic'
-#     para = {'map1':None}
-        
-#     view = [('tab',  'map1', 'map', '')]
 
-#     def run(self, tps, data, snap, para=None):
-#         # print('map_title',self.para['map1'])
-#         # print('data',help(TableManager.get(self.para['map1']).data))
-#         map=TableManager.get(self.para['map1']).data.values[1,:]
-#         print('data',map)
-#         # print('numpy',TableManager.get(self.para['map1']).data.values)
-#         # print('data',TableManager.get(self.para['map1']).data[0])
-class DrawGrid(Simple):
-    title = 'Draw Grid'
+class GridValue(Simple):
+    title = 'Grid Value'
     note = ['8-bit', 'preview']
     view = [(float, 'longtitude_max', (-180,180), 8, 'longtitude_max', 'degree'),
             (float, 'longtitude_min', (-180,180), 8, 'longtitude_min', 'degree'),
             (float, 'latitude_max',(-90,90), 8, 'latitude_max', 'degree'),            
             (float, 'latitude_min',(-90,90), 8, 'latitude_min', 'degree'),
             (float, 'latitude_inter',(0,100), 3, 'latitude_inter', 'degree'),
-            (float, 'longtitude_inter',(0,100), 3, 'longtitude_inter', 'degree'),
-            ('tab',  'map1', 'map', ''),
-            ]
+            (float, 'longtitude_inter',(0,100), 3, 'longtitude_inter', 'degree')]
             # (float, 'e', (-100,100), 1, 'eccentricity', 'ratio')
-    para = {'longtitude_max':122.34921875, 'longtitude_min':120.10546875,'latitude_max':40.98600002,'latitude_min':39.73600008,
-    'latitude_inter':0.100,'longtitude_inter':0.100,'map1':None}
+    para = {'longtitude_max':124.5, 'longtitude_min':117.5,'latitude_max':40,
+        'latitude_min':37, 'latitude_inter':0.100,'longtitude_inter':0.100}
     # def load(self, ips):pass
+
+    def grid(slef, ips, para):
+        lons = np.arange(para['longtitude_min'], para['longtitude_max'], para['longtitude_inter'])
+        lats = np.arange(para['latitude_min'], para['latitude_max'], para['latitude_inter'])
+        trans = np.array(ips.info['trans']).reshape((2,3))
+        lines = []
+        jw2pix = lambda trans, i : np.dot(i-trans[:,0], np.linalg.inv(trans[:,1:]))
+        for r in range(len(lats)-1):
+            line = []
+            for c in range(len(lons)-1):
+                p1, p2 = (lons[c],lats[r]),(lons[c],lats[r+1])
+                p3, p4 = (lons[c+1],lats[r+1]),(lons[c+1],lats[r])
+                rect = [jw2pix(trans, i) for i in [p1, p2, p3, p4]]
+                line.append([tuple(i) for i in rect])
+            lines.append(line)
+        return lines
+
     def preview(self, ips, para):
-        print('preview')
-        self.draw_grid(ips)
+        lines = self.grid(ips, para)
+        polygon_data = []
+        for i in lines: polygon_data.extend(i)
+        polygons = {'type':'polygons', 'body':polygon_data}
+        ips.mark = GeometryMark(polygons)
+        ips.update = True
+
         
     def run(self, ips, imgs=None, para = None):
-        gray_data=self.draw_grid(ips)
-        map=TableManager.get(self.para['map1']).data.values[1,:]
-        thick=map[gray_data.astype(int)]
-        IPy.show_table(pd.DataFrame(thick),title='thick')
+        lines = self.grid(ips, para)
+        mjd = []
+        for line in lines:
+            for pts in line:
+                msk = polygon(* np.array(pts).T[::-1], shape=imgs[0].shape[:2])
+                mjd.append(ips.img[msk[0], msk[1]].mean())
+        data = np.array(mjd).reshape((len(lines), len(lines[0])))
+        IPy.show_table(pd.DataFrame(data), title=ips.title+'-mjd')
 
-    def draw_grid(self,ips):
-        print('data',ips.data)
-        trans = np.array(ips.info['trans']).reshape((2,3))
-        jw1,jw2=(self.para['longtitude_min'],self.para['longtitude_max']),(self.para['latitude_min'],self.para['latitude_max'])
-        interval=(self.para['latitude_inter'],self.para['longtitude_inter'])
-        jw_data,shape=build_grid(jw1,jw2,interval)
-        polygon_data=jw2pix(trans,jw2polygon(trans,jw_data,interval))
-        # ips.data=polygon_data
-        gray_data=np.array([get_gray(ips.imgs[0].copy(),i) for i in polygon_data]).reshape(shape)[::-1,:]
-        print('shape',gray_data.shape)
-
-        mark =  {'type':'layers', 'body':{}}
-        layer = {'type':'layer', 'body':[]}
-
-        texts_xy=(polygon_data[:,0,:]+polygon_data[:,2,:])/2
-        ips.test_id={'type':'texts', 'body':[(i[0][0],i[0][1],str(i[1])) for i in zip(texts_xy.tolist(),np.arange(len(texts_xy)))]}
-
-        layer['body']=[{'type':'polygons', 'body':polygon_data},ips.test_id]
-        # layer['body']=[{'type':'polygons', 'body':polygon_data}]
-        mark['body'][0] = layer
-        ips.mark=GeometryMark(mark)
-        ips.update = True
-        return gray_data
-plgs = [DrawGrid]
+plgs = [GridValue]
