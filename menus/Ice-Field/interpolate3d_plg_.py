@@ -19,6 +19,7 @@ def surface2d(z):
     manager = myvi.Manager()
     manager.add_surf('dem', vts, fs, ns, cs)
     manager.show('DEM Demo') 
+    
 class Interpolate3d(Simple):
     title = 'interpolate 3d'
     note = ['all']

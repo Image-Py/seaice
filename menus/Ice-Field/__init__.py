@@ -1,0 +1,1 @@
+catlog = ['mjd_plg', '-', 'grid_plg']

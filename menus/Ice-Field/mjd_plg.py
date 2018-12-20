@@ -2,11 +2,12 @@ from imagepy.core.engine import Simple, Filter
 from imagepy.core import ImagePlus
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
+from scipy import interpolate
 import numpy as np
 from imagepy import IPy
 
 class Reflectivity(Simple):
-    title = 'Reflectivity'
+    title = 'Ice Reflectivity'
     note = ['rgb', 'not_chanels']
     para = {'cn1':0.372, 'cn3':0.436, 'cn4':0.227}
     view = [(float, 'cn1', (0,1), 3, 'channel 1', '620—670 um'),
@@ -24,7 +25,7 @@ class Reflectivity(Simple):
         IPy.show_ips(av_ips)
 
 class Concentraion(Filter):
-    title = 'Concentraion'
+    title = 'Ice Concentraion'
     note = ['8-bit', 'auto_snap', 'preview']
     para = {'water':0.04, 'ice':0.29}
     view = [('slide', 'water', (0,1), 3, 'pure water'),
@@ -52,4 +53,32 @@ class Show(Simple):
         plt.title(para['title'], fontproperties=myfont, size=24)
         plt.show()
 
-plgs = [Reflectivity, Concentraion, Show]
+from imagepy.ui.panelconfig import widgets
+from .linepanel import LinePanel
+widgets['line'] = LinePanel
+
+class Thickness(Filter):
+    title = 'Ice Thickness'
+    note = ['8-bit', 'auto_msk', 'auto_snap','preview']
+    
+    #parameter
+    para = {'low':0, 'high':255, 'line':None}
+
+    def load(self, ips):
+        hist = np.histogram(ips.lookup(),list(range(257)))[0]
+        self.view = [('line', 'line', hist),
+                     ('slide', 'low', (0,255), 0, 'Low'),
+                     ('slide', 'high', (0,255), 0, 'High')]
+        self.range = ips.range
+        return True
+
+    def cancle(self, ips): ips.range = self.range
+
+    #process
+    def run(self, ips, snap, img, para = None):
+        x, y = np.array(para['line']).T
+        f = interpolate.interp1d(x, y, kind='linear')
+        img[:] = np.clip(f(np.arange(256)),0,255).astype(np.uint8)[snap]
+        ips.range = (para['low'], para['high'])
+
+plgs = [Reflectivity, Concentraion, Thickness, '-', Show]

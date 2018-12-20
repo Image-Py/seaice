@@ -16,7 +16,7 @@ class GridValue(Simple):
     note = ['8-bit', 'preview']
     view = [(float, 'longtitude_max', (-180,180), 8, 'longtitude_max', 'degree'),
             (float, 'longtitude_min', (-180,180), 8, 'longtitude_min', 'degree'),
-            (float, 'latitude_max',(-90,90), 8, 'latitude_max', 'degree'),            
+            (float, 'latitude_max',(-90,90), 8, 'latitude_max', 'degree'),
             (float, 'latitude_min',(-90,90), 8, 'latitude_min', 'degree'),
             (float, 'latitude_inter',(0,100), 3, 'latitude_inter', 'degree'),
             (float, 'longtitude_inter',(0,100), 3, 'longtitude_inter', 'degree')]
