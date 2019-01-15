@@ -5,12 +5,14 @@ import scipy.ndimage as nimg
 from imagepy.core.mark import GeometryMark
 from .circle import Circle
 from scipy import interpolate
+
 def interpolat(x,y,z,shape):
     y1,x1=shape
     func=interpolate.interp2d(x, y, z, kind='cubic')
     xnew, ynew = np.linspace(0,x1,x1), np.linspace(0,y1,y1)
     znew=func(xnew,ynew)
     return znew
+
 class Plugin(Circle):
     title = 'adjust'
     note = ['8-bit', 'auto_snap']

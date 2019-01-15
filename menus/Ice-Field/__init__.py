@@ -1,1 +1,1 @@
-catlog = ['mjd_plg', '-', 'grid_plg']
+catlog = ['mjd_plg', 'grid_plg', '-', 'xml_plg']

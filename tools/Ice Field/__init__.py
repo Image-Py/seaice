@@ -1,1 +1,1 @@
-catlog = ['fit_tol', 'adjust_tol', 'grid']
+catlog = ['adjust_tol', 'reflect', 'concen', 'thick', 'grid.mc', 'field3d']

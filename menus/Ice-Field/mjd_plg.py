@@ -62,7 +62,7 @@ class Thickness(Filter):
     note = ['8-bit', 'auto_msk', 'auto_snap','preview']
     
     #parameter
-    para = {'low':0, 'high':255, 'line':None}
+    para = {'low':0, 'high':255, 'line':[(0,0),(255,255)]}
 
     def load(self, ips):
         hist = np.histogram(ips.lookup(),list(range(257)))[0]
@@ -76,6 +76,7 @@ class Thickness(Filter):
 
     #process
     def run(self, ips, snap, img, para = None):
+        print(para['line'])
         x, y = np.array(para['line']).T
         f = interpolate.interp1d(x, y, kind='linear')
         img[:] = np.clip(f(np.arange(256)),0,255).astype(np.uint8)[snap]

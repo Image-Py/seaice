@@ -1,19 +1,17 @@
 from imagepy import IPy
 import numpy as np
-from imagepy.core.engine import Simple, Filter,Tool,Table
+from imagepy.core.engine import Simple, Filter, Tool, Table
 from imagepy.core.manager import ImageManager,TableManager
 from imagepy.core.mark import GeometryMark
 from imagepy.core import ImagePlus
-import gdal
-import wx
 from skimage.draw import polygon 
-from scipy.stats import linregress
 import pandas as pd
-import matplotlib.pyplot as plt
+import gdal, wx
+from imagepy.core import myvi
 
-class GridValue(Simple):
-    title = 'Grid Value'
-    note = ['8-bit', 'preview']
+class GridValue(Filter):
+    title = 'Count Grid Field'
+    note = ['8-bit', 'req_roi', 'preview']
     view = [(float, 'longtitude_max', (-180,180), 8, 'longtitude_max', 'degree'),
             (float, 'longtitude_min', (-180,180), 8, 'longtitude_min', 'degree'),
             (float, 'latitude_max',(-90,90), 8, 'latitude_max', 'degree'),
@@ -50,15 +48,34 @@ class GridValue(Simple):
         ips.update = True
 
         
-    def run(self, ips, imgs=None, para = None):
+    def run(self, ips, snap, img, para = None):
+        icemsk = ips.get_msk()
         lines = self.grid(ips, para)
         mjd = []
         for line in lines:
             for pts in line:
-                msk = polygon(* np.array(pts).T[::-1], shape=imgs[0].shape[:2])
-                mjd.append(ips.img[msk[0], msk[1]].mean())
-                ips.img[msk[0], msk[1]] = 0
+                msk = polygon(* np.array(pts).T[::-1], shape=img.shape[:2])
+                inice = icemsk[msk]>0
+                if inice.sum()==0: mjd.append(-3)
+                else:mjd.append(img[msk[0][inice], msk[1][inice]].mean())
+                #ips.img[msk[0], msk[1]] = 0
         data = np.array(mjd).reshape((len(lines), len(lines[0])))
-        IPy.show_table(pd.DataFrame(data), title=ips.title+'-Concentraion')
+        IPy.show_table(pd.DataFrame(data), title=ips.title+'-Field')
 
-plgs = [GridValue]
+class Surface2D(Table):
+    title = 'Show Fields 3D'
+    para = {'name':'undifine', 'h':1}
+    view = [(str, 'name', 'Name', ''),
+            (float, 'h', (0.01,1), 2, 'scale z', '0.01~1')]
+    
+    def load(self, para):
+        self.frame = myvi.Frame3D.figure(IPy.curapp, title='3D Canvas')
+        return True
+
+    def run(self, tps, data, snap, para = None):
+        vts, fs, ns, cs = myvi.build_surf2d(tps.data.values, ds=1, sigma=0, k=para['h'])
+        self.frame.viewer.add_surf_asyn(para['name'], vts, fs, ns, cs)
+        self.frame.Raise()
+        self.frame = None
+
+plgs = [GridValue, Surface2D]

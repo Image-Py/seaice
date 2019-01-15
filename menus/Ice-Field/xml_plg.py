@@ -4,7 +4,8 @@ from scipy.linalg import solve
 from imagepy import IPy
 from imagepy.core.engine import Simple
 import wx
-class SetTrans(Simple):
+
+class Plugin(Simple):
     title = 'Set Trans'
     note = ['all']
     para = {'path':''}
@@ -39,4 +40,3 @@ class SetTrans(Simple):
         trans[1,1],trans[1,2]=out[0],out[1]
 
         return trans
-plgs =[SetTrans]
