@@ -62,7 +62,7 @@ class Thickness(Filter):
     note = ['8-bit', 'auto_msk', 'auto_snap','preview']
     
     #parameter
-    para = {'low':0, 'high':255, 'line':[(0,0),(255,255)]}
+    para = {'low':0, 'high':255, 'line':[]}
 
     def load(self, ips):
         hist = np.histogram(ips.lookup(),list(range(257)))[0]

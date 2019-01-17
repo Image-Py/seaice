@@ -1,7 +1,8 @@
 from imagepy import IPy
 import numpy as np
 from imagepy.core.engine import Simple, Filter, Tool, Table
-from imagepy.core.manager import ImageManager,TableManager
+from imagepy.core.manager import ImageManager,TableManager, WriterManager
+from imagepy.core.util import tableio
 from imagepy.core.mark import GeometryMark
 from imagepy.core import ImagePlus
 from skimage.draw import polygon 
@@ -24,8 +25,10 @@ class GridValue(Filter):
     # def load(self, ips):pass
 
     def grid(slef, ips, para):
-        lons = np.arange(para['longtitude_min'], para['longtitude_max'], para['longtitude_inter'])
-        lats = np.arange(para['latitude_min'], para['latitude_max'], para['latitude_inter'])[::-1]
+        lons = np.arange(para['longtitude_min']-para['longtitude_inter'], 
+            para['longtitude_max']+para['longtitude_inter']+1e-8, para['longtitude_inter'])
+        lats = np.arange(para['latitude_min']-para['latitude_inter'], 
+            para['latitude_max']+para['latitude_inter']+1e-8, para['latitude_inter'])[::-1]
         trans = np.array(ips.info['trans']).reshape((2,3))
         lines = []
         jw2pix = lambda trans, i : np.dot(i-trans[:,0], np.linalg.inv(trans[:,1:]))
@@ -78,4 +81,21 @@ class Surface2D(Table):
         self.frame.Raise()
         self.frame = None
 
-plgs = [GridValue, Surface2D]
+def write(path, df):
+    values = df.values
+    f = open(path, 'w')
+    for line in values[:,:15]:
+        f.write(('%2d'*len(line)+'\n')%tuple(line))
+    for line in values[:,15:]:
+        f.write(('%2d'*len(line)+'\n')%tuple(line))
+    f.close()
+
+class SaveField(tableio.Writer):
+    title = 'Save Fields'
+    filt = ['']
+
+save_excel = lambda path, data:data.to_excel(path)
+
+WriterManager.add([''], write, tag='tab')
+
+plgs = [GridValue, SaveField, Surface2D]

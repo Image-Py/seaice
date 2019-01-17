@@ -34,6 +34,7 @@ class Plugin(Circle):
             ips.imgs[0][:]=ips.temp1.copy()
             self.fac_state=0
         ips.update = 'pix'
+        
     def bulid_data(self,shape,data):
         z=data[1].astype(np.float64)
         data=np.array([list(i) for i in data[0]])

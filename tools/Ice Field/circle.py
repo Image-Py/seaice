@@ -7,10 +7,10 @@ from imagepy.core.mark import GeometryMark
 class NewTool(Simple):
     para = {'x':0, 'y':0,'r':100,'preview':True,'z':1}
     view = [(int, 'x', (0,1000), 0, 'x', 'pix'),
-    (int, 'y', (0,1000), 0, 'y', 'pix'),
-    (int, 'r', (0,1000), 0, 'r', 'pix'),
-    (int, 'z', (0,1000), 0, 'z', 'pix')
-    ]
+            (int, 'y', (0, 10240), 0, 'y', 'pix'),
+            (int, 'r', (0, 10240), 0, 'r', 'pix'),
+            (int, 'z', (0, 50), 0, 'z', 'pix')]
+
     # img = '../imgdata/new.png'
     title = 'para'
     note = [ 'all', 'preview']
@@ -28,6 +28,7 @@ class NewTool(Simple):
         self.parent.body[1]['body'][self.index]=(self.para['x'],self.para['y'],5)
         # print(self.parent.body[1]['z'],self.index)
         self.parent.body[1]['z'][self.index]=self.para['z']
+
 class Test(object):
     """docstring for Test"""
     def __init__(self, arg):
@@ -40,7 +41,9 @@ class Circle(Tool):
         self.moving = False
         self.body=[{'type':'circles', 'body':[]},{'type':'circles', 'fill':True,'body':[],'z':[]}]
         self.init()
+
     def init(self):pass
+
     def mouse_down(self, ips, x, y, btn, **key):   
         flag,i=self.pick(x,y,5.0/key['canvas'].get_scale() )
         if flag==True:
@@ -66,20 +69,24 @@ class Circle(Tool):
         elif btn==3:
             self.lineregress(ips)
             # print('show')
+
     def pick(self,x,y,lim):
         for i in range(len(self.body[0]['body'])):
             ox,oy=self.body[0]['body'][i][0],self.body[0]['body'][i][1]
             if abs(x-ox)<lim and abs(y-oy)<lim:return(True,i)
         return (False,-1)
+
     def add(self,x,y):
         self.body[0]['body'].append((x,y,100))
         self.body[1]['body'].append((x,y,5))
         self.body[1]['z'].append(1)
         # print('add',self.body)
+
     def delete(self,index):
         self.body[0]['body'].pop(index)
         self.body[1]['body'].pop(index)
         self.body[1]['z'].pop(index)
+
     def change(self,index,x=None,y=None,r=None):
         temp=self.body[0]['body'][index]
         if x!=None and y!=None:
@@ -92,9 +99,11 @@ class Circle(Tool):
             self.body[0]['body'][index]=(temp[0],y,temp[2])
             self.body[1]['body'][index]=(temp[0],y,5) 
         if r!=None:
-            self.body[0]['body'][index]=(temp[0],temp[1],temp[2]+r)                     
+            self.body[0]['body'][index]=(temp[0],temp[1],temp[2]+r)
+
     def mouse_up(self, ips, x, y, btn, **key):
         if self.moving : self.moving = False
+
     def commit(self,ips):
             mark =  {'type':'layers', 'body':{}}
             layer = {'type':'layer', 'body':[]}
@@ -103,6 +112,7 @@ class Circle(Tool):
             ips.mark=GeometryMark(mark)
             ips.update = True
             ips.data=self.body
+
     def mouse_move(self, ips, x, y, btn, **key):
         lim = 5.0/key['canvas'].get_scale()
         if btn==None:
@@ -115,6 +125,7 @@ class Circle(Tool):
             self.change(self.move_index,x=x,y=y)
             self.commit(ips)
             return
+
     def mouse_wheel(self, ips, x, y, d, **key):
         lim = 5.0/key['canvas'].get_scale()
         flag,i=self.pick(x,y,5.0/key['canvas'].get_scale() )
@@ -123,5 +134,7 @@ class Circle(Tool):
             self.commit(ips)
         else:
             self.change_view(ips)
+
     def change_view(self,ips):print('change_view')
+    
     def lineregress(self,ips):print('lineregress')
