@@ -25,10 +25,10 @@ class GridValue(Filter):
     # def load(self, ips):pass
 
     def grid(slef, ips, para):
-        lons = np.arange(para['longtitude_min']-para['longtitude_inter'], 
-            para['longtitude_max']+para['longtitude_inter']+1e-8, para['longtitude_inter'])
-        lats = np.arange(para['latitude_min']-para['latitude_inter'], 
-            para['latitude_max']+para['latitude_inter']+1e-8, para['latitude_inter'])[::-1]
+        lons = np.arange(para['longtitude_min']-para['longtitude_inter']/2, 
+            para['longtitude_max']+para['longtitude_inter']/2+1e-8, para['longtitude_inter'])
+        lats = np.arange(para['latitude_min']-para['latitude_inter']/2, 
+            para['latitude_max']+para['latitude_inter']/2+1e-8, para['latitude_inter'])[::-1]
         trans = np.array(ips.info['trans']).reshape((2,3))
         lines = []
         jw2pix = lambda trans, i : np.dot(i-trans[:,0], np.linalg.inv(trans[:,1:]))
