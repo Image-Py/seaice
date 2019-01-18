@@ -1,4 +1,19 @@
-# Sea Ice RS Image Analysis Using ImagePy
+# Sea Ice Image Analysis
+
+**Path:** https://github.com/Image-Py/seaice
+
+**Version:** 0.1
+
+**Author:** YXDragon
+
+**Email:** yxdragon@imagepy.org
+
+**Keyword:** seaice, rs
+
+**Description:** a toolkit developed for sea ice rs image processing
+
+you must fill the information upon, and you can not remove or insert line, you can write free below.
+
 [ImagePy](https://github.com/Image-Py/imagepy) is an image processing framework developed in Python. We can extend it with plugin esaily, This project is a toolkit developed for sea ice rs image processing. Please install [ImagePy](https://github.com/Image-Py/imagepy) first, then use **Plugins > Install > Install Plugins** then input this project's git address. Enter, then ImagePy will install this toolkit automotely.(maybe the gdal lib will got some trouble, please use whl [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal))
 
 
