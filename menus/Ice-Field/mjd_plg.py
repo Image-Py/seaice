@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 import numpy as np
 from imagepy import IPy
-
+from skimage import draw
 class Reflectivity(Simple):
     title = 'Ice Reflectivity'
     note = ['rgb', 'not_chanels']
@@ -63,9 +63,12 @@ class Thickness(Filter):
     
     #parameter
     para = {'low':0, 'high':255, 'line':[]}
-
+    
     def load(self, ips):
         hist = np.histogram(ips.lookup(),list(range(257)))[0]
+        if not ips.data is None: 
+            for i in range(len(ips.data[0]['body'])):
+                self.para['line'].append([self.get_gray(ips.imgs[0].copy(),ips.data[0]['body'][i]),ips.data[1]['z'][i]])
         self.view = [('line', 'line', hist),
                      ('slide', 'low', (0,255), 0, 'Low'),
                      ('slide', 'high', (0,255), 0, 'High')]
@@ -81,5 +84,20 @@ class Thickness(Filter):
         f = interpolate.interp1d(x, y, kind='linear')
         img[:] = np.clip(f(np.arange(256)),0,255).astype(np.uint8)[snap]
         ips.range = (para['low'], para['high'])
+    def get_gray(self):
+        pass
 
+    def get_mask(self,img,data):
+        shape=img.shape
+        msk=np.zeros(shape)
+        rr, cc=draw.circle(data[1],data[0],data[2])
+        msk[rr, cc] = 1
+        # ipsd = ImagePlus([msk], 'test')
+        # IPy.show_ips(ipsd)
+        return msk.astype('uint8')
+    def get_gray(self,img,circle_data):
+        msk=self.get_mask(img,circle_data)
+        img*=msk
+        gray=img[img>0].mean()
+        return gray
 plgs = [Reflectivity, Concentraion, Thickness, '-', Show]

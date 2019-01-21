@@ -37,6 +37,7 @@ class Test(object):
         
 class Circle(Tool):
     title = 'circle'
+    
     def __init__(self):
         self.moving = False
         self.body=[{'type':'circles', 'body':[]},{'type':'circles', 'fill':True,'body':[],'z':[]}]
@@ -45,6 +46,7 @@ class Circle(Tool):
     def init(self):pass
 
     def mouse_down(self, ips, x, y, btn, **key):   
+        print('down')
         flag,i=self.pick(x,y,5.0/key['canvas'].get_scale() )
         if flag==True:
             self.moving = True
@@ -115,9 +117,10 @@ class Circle(Tool):
 
     def mouse_move(self, ips, x, y, btn, **key):
         lim = 5.0/key['canvas'].get_scale()
+        # btn=None
         if btn==None:
             self.cursor = wx.CURSOR_CROSS
-            flag,i=self.pick(x,y,5.0/key['canvas'].get_scale() )
+            flag,i=self.pick(x,y,5.0/key['canvas'].get_scale())
             if flag==True:
                 self.cursor = wx.CURSOR_HAND
                     # return
@@ -127,6 +130,7 @@ class Circle(Tool):
             return
 
     def mouse_wheel(self, ips, x, y, d, **key):
+        print('wheel')
         lim = 5.0/key['canvas'].get_scale()
         flag,i=self.pick(x,y,5.0/key['canvas'].get_scale() )
         if flag==True:
