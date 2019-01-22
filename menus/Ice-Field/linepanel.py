@@ -150,8 +150,8 @@ class LinePanel(wx.Panel):
         for i in np.linspace(0, self.l+1, 5):
             dc.DrawLine(0*2+ox-3, i+oy, self.l*2+2+ox, i+oy)
             dc.DrawLine(i*2+ox, 0+oy, i*2+ox, self.l+2+oy+3)
-            dc.DrawText('10.5', 5, i+oy-8)
-            dc.DrawText('255', i*2+ox-8, self.l+2+oy+3)
+            dc.DrawText(str(50-i/256*50), 5, i+oy-8)
+            dc.DrawText(str(i), i*2+ox-8, self.l+2+oy+3)
         dc.SetBrush(wx.Brush((0,0,0), wx.BRUSHSTYLE_TRANSPARENT))
         '''
         arr = np.zeros((10,self.l+1,3),dtype=np.uint8)

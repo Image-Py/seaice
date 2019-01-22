@@ -65,10 +65,15 @@ class Thickness(Filter):
     para = {'low':0, 'high':255, 'line':[]}
     
     def load(self, ips):
+        self.para['line']=[]
         hist = np.histogram(ips.lookup(),list(range(257)))[0]
         if not ips.data is None: 
             for i in range(len(ips.data[0]['body'])):
-                self.para['line'].append([self.get_gray(ips.imgs[0].copy(),ips.data[0]['body'][i]),ips.data[1]['z'][i]])
+                data=ips.data[0]['body'][i]
+                msk=draw.circle(data[1],data[0],data[2],shape=ips.img.shape)
+                gray=ips.img[msk].mean()
+                self.para['line'].append([gray,ips.data[1]['z'][i]])
+                # self.para['line'].append([self.get_gray(ips.imgs[0].copy(),ips.data[0]['body'][i]),ips.data[1]['z'][i]])
         self.view = [('line', 'line', hist),
                      ('slide', 'low', (0,255), 0, 'Low'),
                      ('slide', 'high', (0,255), 0, 'High')]
@@ -84,13 +89,11 @@ class Thickness(Filter):
         f = interpolate.interp1d(x, y, kind='linear')
         img[:] = np.clip(f(np.arange(256)),0,255).astype(np.uint8)[snap]
         ips.range = (para['low'], para['high'])
-    def get_gray(self):
-        pass
 
     def get_mask(self,img,data):
         shape=img.shape
         msk=np.zeros(shape)
-        rr, cc=draw.circle(data[1],data[0],data[2])
+        rr, cc=draw.circle(data[1],data[0],data[2],shape=shape)
         msk[rr, cc] = 1
         # ipsd = ImagePlus([msk], 'test')
         # IPy.show_ips(ipsd)
