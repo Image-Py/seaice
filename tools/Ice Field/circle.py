@@ -53,7 +53,7 @@ class Circle(Tool):
             self.move_index=i
         if key['shift']:
             self.add(x,y)
-            ips.update = True
+            ips.update()
             return           
         if self.moving==False and btn==1:
             self.body[0]['body']=[(x,y,100)]
@@ -112,7 +112,7 @@ class Circle(Tool):
             layer['body']=self.body
             mark['body'][0] = layer
             ips.mark=GeometryMark(mark)
-            ips.update = True
+            ips.update()
             ips.data=self.body
 
     def mouse_move(self, ips, x, y, btn, **key):

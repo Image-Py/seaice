@@ -48,7 +48,7 @@ class GridValue(Filter):
         for i in lines: polygon_data.extend(i)
         polygons = {'type':'polygons', 'body':polygon_data}
         ips.mark = GeometryMark(polygons)
-        ips.update = True
+        ips.update()
 
         
     def run(self, ips, snap, img, para = None):

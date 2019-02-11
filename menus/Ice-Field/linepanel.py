@@ -17,7 +17,7 @@ class LinePanel(wx.Panel):
         self.l, self.k = l, l/255.0
         self.idx = -1
         self.set_hist(hist)
-        self.update = False
+        self.dirty = False
         self.ylim = 50
         self.pts = [(0,0), (255, 255)]
         wx.Panel.Bind(self, wx.EVT_SIZE, self.on_size)  
@@ -28,6 +28,8 @@ class LinePanel(wx.Panel):
         wx.Panel.Bind(self, wx.EVT_MOTION, self.on_mv )
         wx.Panel.Bind(self, wx.EVT_RIGHT_DOWN, self.on_rd )
         wx.Panel.Bind(self, wx.EVT_MOUSEWHEEL, self.on_wl )
+
+    def update(self): self.dirty = True
 
     @classmethod
     def lookup(cls, pts):
@@ -42,12 +44,12 @@ class LinePanel(wx.Panel):
         
     def on_size(self, event):
         self.init_buf()
-        self.update = True
+        self.update()
         
     def on_idle(self, event):
-        if self.update == True:
+        if self.dirty == True:
             self.draw()
-            self.update = False
+            self.dirty = False
 
     def pick(self, x, y):
         dis = norm(np.array(self.pts)-(x,y), axis=1)
@@ -61,7 +63,7 @@ class LinePanel(wx.Panel):
         if self.idx==-1: 
             self.pts.append((x/2, 255-y))
             self.idx = len(self.pts)-1
-            self.update = True
+            self.update()
             self.handle(event)
 
     def on_lu(self, event):
@@ -75,7 +77,7 @@ class LinePanel(wx.Panel):
         if not self.pts[self.idx][0] in (0, 255):
             del self.pts[self.idx]
             self.idx = -1
-            self.update = True
+            self.update()
             self.handle(event)
 
     def on_mv(self, event):
@@ -91,14 +93,14 @@ class LinePanel(wx.Panel):
             else: x = np.clip(x, 1, 254+255)
             y = np.clip(y, 0, 255)
             self.pts[self.idx] = (x/2, 255-y)
-            self.update = True
+            self.update()
             self.handle(event)
     
     def on_wl(self, event):
         if self.idx!=-1:
             x, y = self.pts[self.idx]
             self.pts[self.idx] = (x, y+[-1,1][event.GetWheelRotation()>0])
-            self.update = True
+            self.update()
             self.handle(event)
 
     def on_paint(self, event):
@@ -109,11 +111,11 @@ class LinePanel(wx.Panel):
         else:
             self.hist = (hist*self.l/hist.max())
             self.logh = (np.log(self.hist+1.0))*(self.l/(np.log(self.l+1)))
-        self.update = True
+        self.update()
         
     def set_pts(self, pts):
         self.x1, self.x2 = x1, x2
-        self.update = True        
+        self.update()        
 
     def draw(self):
         ox, oy = self.offset
@@ -171,7 +173,7 @@ class LinePanel(wx.Panel):
 
     def SetValue(self, value=[]):
         self.pts = [(0,0)] + [(i,j/50*255) for i,j in value] + [(255, 255)]
-        self.update = True
+        self.update()
 
     def GetValue(self): return [(i[0], i[1]/255*self.ylim) for i in sorted(self.pts)]
 

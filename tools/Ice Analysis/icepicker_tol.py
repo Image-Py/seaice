@@ -41,7 +41,7 @@ class Plugin(Tool):
         polygon = Polygon(xy)
         c = polygon.centroid
         IPy.set_info('At N:%.4f, E:%.4f  Area:%.4f'%(c.x, c.y, polygon.area))
-        ips.update = True
+        ips.update()
         
     def mouse_up(self, ips, x, y, btn, **key):
         pass

@@ -36,7 +36,7 @@ class Plugin(Circle):
     #     elif self.fac_state==2:
     #         ips.imgs[0][:]=ips.temp1.copy()
     #         self.fac_state=0
-    #     ips.update = 'pix'
+    #     ips.update()
         
     # def bulid_data(self,shape,data):
     #     z=data[1].astype(np.float64)
