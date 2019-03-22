@@ -1,4 +1,4 @@
-from imagepy import IPy
+from imagepy import IPy, root_dir
 import numpy as np
 from imagepy.core.engine import Simple, Filter, Tool, Table
 from imagepy.core.manager import ImageManager,TableManager, WriterManager
@@ -7,7 +7,7 @@ from imagepy.core.mark import GeometryMark
 from imagepy.core import ImagePlus
 from skimage.draw import polygon 
 import pandas as pd
-import gdal, wx
+import gdal, wx, os
 from imagepy.core import myvi
 
 class GridValue(Filter):
@@ -55,11 +55,11 @@ class GridValue(Filter):
         icemsk = ips.get_msk()
         lines = self.grid(ips, para)
         mjd = []
-        for line in lines:
-            for pts in line:
-                msk = polygon(* np.array(pts).T[::-1], shape=img.shape[:2])
+        for i in range(len(lines)):
+            for j in range(len(lines[i])):
+                msk = polygon(* np.array(lines[i][j]).T[::-1], shape=img.shape[:2])
                 inice = icemsk[msk]>0
-                if inice.sum()==0: mjd.append(-3)
+                if inice.sum()<=len(msk[0])//2: mjd.append(-3)
                 else:mjd.append(img[msk[0][inice], msk[1][inice]].mean())
                 #ips.img[msk[0], msk[1]] = 0
         data = np.array(mjd).reshape((len(lines), len(lines[0])))
@@ -81,21 +81,29 @@ class Surface2D(Table):
         self.frame.Raise()
         self.frame = None
 
-def write(path, df):
+def write(path, df, title):
     values = df.values
     f = open(path, 'w')
+    f.write(title+'\n')
     for line in values[:,:15]:
         f.write(('%2d'*len(line)+'\n')%tuple(line))
     for line in values[:,15:]:
         f.write(('%2d'*len(line)+'\n')%tuple(line))
     f.close()
 
-class SaveField(tableio.Writer):
+class SaveField(Table):
     title = 'Save Fields'
-    filt = ['']
+    note = ['all']
+    para={'path':root_dir}
 
-save_excel = lambda path, data:data.to_excel(path)
+    def show(self):
+        filt = '|'.join(['%s files (*.%s)|*.%s'%(i.upper(),i,i) for i in ['']])
+        return IPy.getpath('Save..', filt, 'save', self.para)
 
-WriterManager.add([''], write, tag='tab')
+    #process
+    def run(self, tps, snap, data, para = None):
+        fp, fn = os.path.split(para['path'])
+        fn, fe = os.path.splitext(fn)
+        write(para['path'], data, tps.title)
 
 plgs = [GridValue, SaveField, Surface2D]
