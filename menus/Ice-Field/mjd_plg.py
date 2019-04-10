@@ -21,7 +21,7 @@ class Reflectivity(Simple):
         Av = (r * cn1 + b * cn3 + g * cn4).T
         Av = np.clip(Av, 0, 155).astype(np.uint8)
         av_ips = ImagePlus([Av.astype(np.uint8)], ips.title + '-Reflectivity')
-        av_ips.info = ips.info
+        av_ips.data = ips.data
         IPy.show_ips(av_ips)
 
 class Concentraion(Filter):
@@ -65,17 +65,13 @@ class Thickness(Filter):
     para = {'low':0, 'high':255, 'line':[]}
     
     def load(self, ips):
-        self.para['line']=[]
         hist = np.histogram(ips.lookup(),list(range(257)))[0]
-        print(ips.data)
-        print('===========')
-        if not ips.data is None: 
-            for i in range(len(ips.data[0]['body'])):
-                data=ips.data[0]['body'][i]
-                msk=draw.circle(data[1],data[0],data[2],shape=ips.img.shape)
+        self.para['line'] = [(0,0.0), (255,50.0)]
+        if 'adjc' in ips.data: 
+            for x, y, r, z in ips.data['adjc']:
+                msk=draw.circle(y, x, r, shape=ips.img.shape)
                 gray=ips.img[msk].mean()
-                self.para['line'].append([gray,ips.data[1]['z'][i]])
-                # self.para['line'].append([self.get_gray(ips.imgs[0].copy(),ips.data[0]['body'][i]),ips.data[1]['z'][i]])
+                self.para['line'].insert(-1, [gray, z])
         self.view = [('line', 'line', hist),
                      ('slide', 'low', (0,255), 0, 'Low'),
                      ('slide', 'high', (0,255), 0, 'High')]
@@ -85,8 +81,7 @@ class Thickness(Filter):
     def cancle(self, ips): ips.range = self.range
 
     #process
-    def run(self, ips, snap, img, para = None):
-        print(para['line'])
+    def run(self, ips, snap, img, para = None):        
         x, y = np.array(para['line']).T
         f = interpolate.interp1d(x, y, kind='linear')
         img[:] = np.clip(f(np.arange(256)),0,255).astype(np.uint8)[snap]

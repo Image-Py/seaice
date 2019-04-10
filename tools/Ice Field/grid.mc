@@ -1,1 +1,2 @@
-Count Grid Field>None
+Open Geo Roi>{'path': '../../data/landedgegrid.wkt'}
+Count Grid Field>{'longtitude_max': 124.5, 'longtitude_min': 117.5, 'latitude_max': 41, 'latitude_min': 37, 'latitude_inter': 0.1, 'longtitude_inter': 0.1}

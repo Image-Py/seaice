@@ -172,7 +172,7 @@ class LinePanel(wx.Panel):
     def Bind(self, z, handle):self.handle = handle
 
     def SetValue(self, value=[]):
-        self.pts = [(0,0)] + [(i,j/50*255) for i,j in value] + [(255, 255)]
+        self.pts = [(i,j/50*255) for i,j in value]
         self.update()
 
     def GetValue(self): return [(i[0], i[1]/255*self.ylim) for i in sorted(self.pts)]

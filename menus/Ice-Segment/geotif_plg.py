@@ -10,22 +10,26 @@ import numpy as np
 from numpy.linalg import inv
 
 class Open(fileio.Reader):
-	title = 'Geo TIF Open'
-	filt = ['TIF', 'TIFF']
+    title = 'Geo TIF Open'
+    filt = ['TIFF', 'TIF']
 
-	#process
-	def run(self, para = None):
-		dataset = gdal.Open(para['path'])
-		imgs = dataset.ReadAsArray().transpose((1,2,0))
-		fp, fn = os.path.split(para['path'])
-		fn, fe = os.path.splitext(fn) 
-		ips = ImagePlus([imgs], fn)
-		IPy.show_ips(ips)
+    #process
+    def run(self, para = None):
+        dataset = gdal.Open(para['path'])
+        imgs = dataset.ReadAsArray()
+        if imgs.dtype == np.uint8 and imgs.shape[0]==3:
+            imgs = [imgs.transpose((1,2,0))]
+        elif imgs.ndim==2: imgs = [imgs]
+        else: imgs = list(imgs)
+        fp, fn = os.path.split(para['path'])
+        fn, fe = os.path.splitext(fn) 
+        ips = ImagePlus(imgs, fn)
+        IPy.show_ips(ips)
 
-		ips.info['proj'] = dataset.GetProjection()
-		ips.info['trans'] = dataset.GetGeoTransform()
-		cont = '##Projection:\n%s\n##Transform\n%s\n'
-		IPy.show_md(fn, cont%(ips.info['proj'], ips.info['trans']))
+        ips.data['proj'] = dataset.GetProjection()
+        ips.data['trans'] = dataset.GetGeoTransform()
+        cont = '##Projection:\n%s\n##Transform\n%s\n'
+        IPy.show_md(fn, cont%(ips.data['proj'], ips.data['trans']))
 		
 class Save(fileio.Writer):
     title = 'Geo TIF Save'
@@ -33,16 +37,17 @@ class Save(fileio.Writer):
 
     #process
     def run(self, ips, imgs, para = None):
-        im_data = ips.img.transpose((2,0,1))
-
-        im_bands, im_height, im_width = im_data.shape
+        if imgs[0].dtype==np.uint8 and imgs[0].ndim==3:
+            imgs = list(imgs[0].transpose((2,0,1)))
+        im_height, im_width = imgs[0].shape
+        im_bands = len(imgs)
         driver = gdal.GetDriverByName("GTiff")
         dataset = driver.Create(para['path'], im_width, im_height, im_bands, gdal.GDT_Byte)
         if(dataset!= None):
-            dataset.SetGeoTransform(ips.info['trans']) #写入仿射变换参数
-            dataset.SetProjection(ips.info['proj']) #写入投影
+            dataset.SetGeoTransform(ips.data['trans'])
+            dataset.SetProjection(ips.data['proj'])
         for i in range(im_bands):
-            dataset.GetRasterBand(i+1).WriteArray(im_data[i])
+            dataset.GetRasterBand(i+1).WriteArray(imgs[i])
         del dataset
 
 class DuplicatePrj(Simple):
@@ -72,13 +77,13 @@ class DuplicatePrj(Simple):
                 ipsd.backimg = ips.backimg[sr, sc]
 
         ipsd.backmode = ips.backmode
-        ipsd.info = dict(ips.info)
-        trans = np.array(ips.info['trans']).reshape((2,3))
+        ipsd.data = dict(ips.data)
+        trans = np.array(ips.data['trans']).reshape((2,3))
         sc, sr = ips.get_rect()
         dal = np.dot(trans[:,1:], (sr.start, sc.start))
         trans[:,0] += dal
-        ipsd.info['trans'] = tuple(trans.ravel())
-        ipsd.info['back'] = ipsd.img.copy()
+        ipsd.data['trans'] = tuple(trans.ravel())
+        ipsd.data['back'] = ipsd.img.copy()
         IPy.show_ips(ipsd)
 
 class Match(Simple):
@@ -91,10 +96,10 @@ class Match(Simple):
 
     def run(self, ips, imgs, para = None):
         ips2 = WindowsManager.get(para['temp']).ips
-        trans1 = np.array(ips.info['trans'])
+        trans1 = np.array(ips.data['trans'])
         trans1 = np.hstack((trans1[[1,2,0,4,5,3]], [0,0,1]))
         trans1 = trans1.reshape((3,3))
-        trans2 = np.array(ips2.info['trans'])
+        trans2 = np.array(ips2.data['trans'])
         trans2 = np.hstack((trans2[[1,2,0,4,5,3]], [0,0,1]))
         trans2 = trans2.reshape((3,3))
 
@@ -109,7 +114,7 @@ class Match(Simple):
                 nimg.affine_transform(ips.img[:,:,i], trans[:,:2], 
                     offset=trans[:,2], output_shape=ips2.size, output=rst[:,:,i])
         ips = ImagePlus([rst], ips.title+'-trans')
-        ips.info = ips2.info
+        ips.data = ips2.data
         IPy.show_ips(ips)
 
 plgs = [Open, Save, DuplicatePrj, Match]

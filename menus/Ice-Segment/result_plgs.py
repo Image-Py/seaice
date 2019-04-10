@@ -36,12 +36,12 @@ class IceStatic(Simple):
     #process
     def run(self, ips, imgs, para = None):
         conts = find_contours(ips.img, 1e-6, fully_connected='low', positive_orientation='low')
-        trans = np.array(ips.info['trans']).reshape((2,3))
+        trans = np.array(ips.data['trans']).reshape((2,3))
 
         xian = 'PROJCS["Xian 1980 / Gauss-Kruger zone 17", GEOGCS["Xian 1980",DATUM["Xian_1980",SPHEROID["Xian  1980",6378140,298.257,AUTHORITY["EPSG","7049"]],AUTHORITY["EPSG","6610"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4610"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",120],PARAMETER["scale_factor",1],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","2331"]]'
 
         osrprj = osr.SpatialReference()
-        osrprj.ImportFromWkt(ips.info['proj'])
+        osrprj.ImportFromWkt(ips.data['proj'])
         osrgeo = osr.SpatialReference()
         osrgeo.ImportFromWkt(xian)
         ct = osr.CoordinateTransformation(osrprj, osrgeo)
@@ -72,7 +72,7 @@ class ShapeWriter(Simple):
         folder = IPy.getpath('Export Shapefile', '', 'open')
         if folder==None: return
         conts = find_contours(ips.img, 1e-6, fully_connected='low', positive_orientation='low')
-        trans = np.array(ips.info['trans']).reshape((2,3))
+        trans = np.array(ips.data['trans']).reshape((2,3))
 
         gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8","NO")    
         gdal.SetConfigOption("SHAPE_ENCODING","")     
@@ -105,7 +105,7 @@ class WKTWriter(Simple):
         folder = IPy.getpath('Export WKT', 'files (*.wkt)|*.wkt', 'save')
         if folder==None: return
         conts = find_contours(ips.img, 1e-6, fully_connected='low', positive_orientation='low')
-        trans = np.array(ips.info['trans']).reshape((2,3))
+        trans = np.array(ips.data['trans']).reshape((2,3))
         f = open(folder, 'w')
         for i in range(len(conts)):
             cur = conts[i][:,::-1]
@@ -145,11 +145,11 @@ class ShowResult(Simple):
     #process
     def run(self, ips, imgs, para = None):
         conts = find_contours(ips.img, 1e-6, fully_connected='low', positive_orientation='low')
-        trans = np.array(ips.info['trans']).reshape((2,3))
+        trans = np.array(ips.data['trans']).reshape((2,3))
         xian = 'PROJCS["Xian 1980 / Gauss-Kruger zone 17", GEOGCS["Xian 1980",DATUM["Xian_1980",SPHEROID["Xian  1980",6378140,298.257,AUTHORITY["EPSG","7049"]],AUTHORITY["EPSG","6610"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4610"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",120],PARAMETER["scale_factor",1],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","2331"]]'
 
         osrprj = osr.SpatialReference()
-        osrprj.ImportFromWkt(ips.info['proj'])
+        osrprj.ImportFromWkt(ips.data['proj'])
         osrgeo = osr.SpatialReference()
         osrgeo.ImportFromWkt(xian)
         ct = osr.CoordinateTransformation(osrprj, osrgeo)
@@ -163,7 +163,7 @@ class ShowResult(Simple):
 
         areas = np.array(areas)
         #areas[np.argmin(areas)] = areas.max()/-2
-        wx.CallAfter(pub.sendMessage, 'showice', img=ips.info['back'], ices=conts, areas=areas, para=para)
+        wx.CallAfter(pub.sendMessage, 'showice', img=ips.data['back'], ices=conts, areas=areas, para=para)
 
 class Difference(Simple):
     """Calculator Plugin derived from imagepy.core.engine.Simple """
@@ -179,7 +179,7 @@ class Difference(Simple):
         nimg[ips.img>0] += 80
         nimg[ips2.img>0] += 160
         ips = ImagePlus([nimg], ips.title+'-diff-'+ips2.title)
-        ips.info = ips2.info
+        ips.data = ips2.data
         IPy.show_ips(ips)
 
 plgs = [Difference, IceStatic, ShowResult, ShapeWriter, WKTWriter]
