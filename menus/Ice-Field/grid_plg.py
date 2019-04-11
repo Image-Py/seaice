@@ -98,7 +98,7 @@ class SaveField(Table):
 
     def show(self):
         filt = '|'.join(['%s files (*.%s)|*.%s'%(i.upper(),i,i) for i in ['']])
-        return IPy.getpath('Save..', filt, 'save', self.para)
+        return IPy.getpath('Save..', filt, 'save', self.para, name=self.tps.title[:8])
 
     #process
     def run(self, tps, snap, data, para = None):

@@ -6,6 +6,7 @@ from scipy import interpolate
 import numpy as np
 from imagepy import IPy
 from skimage import draw
+
 class Reflectivity(Simple):
     title = 'Ice Reflectivity'
     note = ['rgb', 'not_chanels']
