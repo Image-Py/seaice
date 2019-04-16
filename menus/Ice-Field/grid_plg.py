@@ -25,11 +25,25 @@ class GridValue(Filter):
     # def load(self, ips):pass
 
     def grid(slef, ips, para):
-        lons = np.arange(para['longtitude_min']-para['longtitude_inter']/2, 
+        from time import time
+        lons = np.arange(para['longtitude_min']-para['longtitude_inter']/2,
             para['longtitude_max']+para['longtitude_inter']/2+1e-8, para['longtitude_inter'])
         lats = np.arange(para['latitude_min']-para['latitude_inter']/2, 
             para['latitude_max']+para['latitude_inter']/2+1e-8, para['latitude_inter'])[::-1]
+        idx = np.array(np.where(np.ones((len(lats)-1, len(lons)-1)))).T.reshape((-1,1,2))
+        idx = (idx + [(0,0),(1,0),(1,1),(0,1)]).reshape(-1,2).T
+        arr = np.array([lons[idx[1]], lats[idx[0]]])
         trans = np.array(ips.data['trans']).reshape((2,3))
+        arr = np.dot(np.linalg.inv(trans[:,1:]), arr-trans[:,:1]).T
+        lines = [[(lons.min(), i),(lons.max(), i)] for i in lats]
+        lines += [[(i, lats.min()),(i, lats.max())] for i in lons]
+        lines = np.array(lines).reshape((-1,2)).T
+        lines = np.dot(np.linalg.inv(trans[:,1:]), lines-trans[:,:1]).T
+        return arr.reshape((-1,4,2)), lines, len(lats)-1, len(lons)-1
+
+        '''
+        print(arr)
+
         lines = []
         jw2pix = lambda trans, i : np.dot(i-trans[:,0], np.linalg.inv(trans[:,1:]))
         for r in range(len(lats)-1):
@@ -40,29 +54,31 @@ class GridValue(Filter):
                 rect = [jw2pix(trans, i) for i in [p1, p2, p3, p4]]
                 line.append([tuple(i) for i in rect])
             lines.append(line)
-        return lines
+        print('grid', time()-a)
+        print(lines[0][:2])
+        '''
 
     def preview(self, ips, para):
-        lines = self.grid(ips, para)
-        polygon_data = []
-        for i in lines: polygon_data.extend(i)
-        polygons = {'type':'polygons', 'body':polygon_data}
+        grid, lines, row, col = self.grid(ips, para)
+        lines = lines.reshape((-1,2,2))
+        polygons = {'type':'lines', 'body':lines}
         ips.mark = GeometryMark(polygons)
         ips.update()
 
-        
     def run(self, ips, snap, img, para = None):
         icemsk = ips.get_msk()
-        lines = self.grid(ips, para)
+        lines, row, col = self.grid(ips, para)
+        from time import time
+        a = time()
         mjd = []
-        for i in range(len(lines)):
-            for j in range(len(lines[i])):
-                msk = polygon(* np.array(lines[i][j]).T[::-1], shape=img.shape[:2])
-                inice = icemsk[msk]>0
-                if inice.sum()<=len(msk[0])//2: mjd.append(-3)
-                else:mjd.append(img[msk[0][inice], msk[1][inice]].mean())
-                #ips.img[msk[0], msk[1]] = 0
-        data = np.array(mjd).reshape((len(lines), len(lines[0])))
+        for pts in lines:
+            msk = polygon(* pts.T[::-1], shape=img.shape[:2])
+            inice = icemsk[msk]>0
+            if inice.sum()<=len(msk[0])//2: mjd.append(-3)
+            else:mjd.append(img[msk[0][inice], msk[1][inice]].mean())
+            #ips.img[msk[0], msk[1]] = 0
+        data = np.array(mjd).reshape(row, col)
+        print('value', time()-a)
         IPy.show_table(pd.DataFrame(data), title=ips.title+'-Field')
 
 class Surface2D(Table):
