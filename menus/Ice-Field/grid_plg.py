@@ -67,11 +67,11 @@ class GridValue(Filter):
 
     def run(self, ips, snap, img, para = None):
         icemsk = ips.get_msk()
-        lines, row, col = self.grid(ips, para)
+        grid, lines, row, col = self.grid(ips, para)
         from time import time
         a = time()
         mjd = []
-        for pts in lines:
+        for pts in grid:
             msk = polygon(* pts.T[::-1], shape=img.shape[:2])
             inice = icemsk[msk]>0
             if inice.sum()<=len(msk[0])//2: mjd.append(-3)
