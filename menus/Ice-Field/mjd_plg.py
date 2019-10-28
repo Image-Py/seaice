@@ -3,6 +3,7 @@ from imagepy.core import ImagePlus
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 from scipy import interpolate
+import geonumpy as gnp
 import numpy as np
 from imagepy import IPy
 from skimage import draw
@@ -21,7 +22,8 @@ class Reflectivity(Simple):
         cn1, cn3, cn4 = para['cn1'], para['cn3'], para['cn4']
         Av = (r * cn1 + b * cn3 + g * cn4).T
         Av = np.clip(Av, 0, 155).astype(np.uint8)
-        av_ips = ImagePlus([Av.astype(np.uint8)], ips.title + '-Reflectivity')
+        img = gnp.geoarray(Av.astype(np.uint8), mat=ips.img.mat, crs=ips.img.crs)
+        av_ips = ImagePlus([img], ips.title + '-Reflectivity')
         av_ips.data = ips.data
         IPy.show_ips(av_ips)
 

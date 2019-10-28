@@ -4,87 +4,29 @@ from imagepy.core.engine import Simple
 from imagepy import IPy
 from imagepy.core import ImagePlus
 from imagepy.core.manager import WindowsManager
-import os
+import geonumpy.io as gio
+import os, os.path as osp
 import scipy.ndimage as nimg
 import numpy as np
 from numpy.linalg import inv
+import geonumpy.match as gmt
 
-class Open(fileio.Reader):
+class OpenTif(fileio.Reader):
     title = 'Geo TIF Open'
-    filt = ['TIFF', 'TIF']
+    filt = ['TIF']
 
-    #process
     def run(self, para = None):
-        dataset = gdal.Open(para['path'])
-        imgs = dataset.ReadAsArray()
-        if imgs.dtype == np.uint8 and imgs.shape[0]==3:
-            imgs = [imgs.transpose((1,2,0))]
-        elif imgs.ndim==2: imgs = [imgs]
-        else: imgs = list(imgs)
-        fp, fn = os.path.split(para['path'])
-        fn, fe = os.path.splitext(fn) 
-        ips = ImagePlus(imgs, fn)
-        IPy.show_ips(ips)
+        img = gio.read_tif(para['path'])
+        fp, fn = osp.split(para['path'])
+        fn, fe = osp.splitext(fn)
+        IPy.show_img([img], fn)
 
-        ips.data['proj'] = dataset.GetProjection()
-        ips.data['trans'] = dataset.GetGeoTransform()
-        cont = '##Projection:\n%s\n##Transform\n%s\n'
-        IPy.show_md(fn, cont%(ips.data['proj'], ips.data['trans']))
-		
-class Save(fileio.Writer):
-    title = 'Geo TIF Save'
-    filt = ['TIF', 'TIFF']
+class SaveTif(fileio.Writer):
+    title = 'Geo TIF Write'
+    filt = ['TIF']
 
-    #process
     def run(self, ips, imgs, para = None):
-        if imgs[0].dtype==np.uint8 and imgs[0].ndim==3:
-            imgs = list(imgs[0].transpose((2,0,1)))
-        im_height, im_width = imgs[0].shape
-        im_bands = len(imgs)
-        driver = gdal.GetDriverByName("GTiff")
-        dataset = driver.Create(para['path'], im_width, im_height, im_bands, gdal.GDT_Byte)
-        if(dataset!= None):
-            dataset.SetGeoTransform(ips.data['trans'])
-            dataset.SetProjection(ips.data['proj'])
-        for i in range(im_bands):
-            dataset.GetRasterBand(i+1).WriteArray(imgs[i])
-        del dataset
-
-class DuplicatePrj(Simple):
-    title = 'Duplicate With Projection'
-    note = ['all']
-    
-    para = {'name':'Undefined'}
-    
-    def load(self, ips):
-        self.para['name'] = ips.title+'-copy'
-        self.view = [(str, 'name','Name', '')]
-        return True
-    #process
-    def run(self, ips, imgs, para = None):
-        name = para['name']
-        if ips.roi == None:
-            img = ips.img.copy()
-            ipsd = ImagePlus([img], name)
-            ipsd.backimg = ips.backimg
-        else:
-            img = ips.get_subimg().copy()
-            ipsd = ImagePlus([img], name)
-            box = ips.roi.get_box()
-            ipsd.roi = ips.roi.affine(np.eye(2), (-box[0], -box[1]))
-            if not ips.backimg is None:
-                sr, sc = ips.get_rect()
-                ipsd.backimg = ips.backimg[sr, sc]
-
-        ipsd.backmode = ips.backmode
-        ipsd.data = dict(ips.data)
-        trans = np.array(ips.data['trans']).reshape((2,3))
-        sc, sr = ips.get_rect()
-        dal = np.dot(trans[:,1:], (sr.start, sc.start))
-        trans[:,0] += dal
-        ipsd.data['trans'] = tuple(trans.ravel())
-        ipsd.data['back'] = ipsd.img.copy()
-        IPy.show_ips(ipsd)
+        gio.write_tif(ips.img, ['path'])
 
 class Match(Simple):
     """Calculator Plugin derived from imagepy.core.engine.Simple """
@@ -95,26 +37,8 @@ class Match(Simple):
     view = [('img', 'temp','template',  '')]
 
     def run(self, ips, imgs, para = None):
-        ips2 = WindowsManager.get(para['temp']).ips
-        trans1 = np.array(ips.data['trans'])
-        trans1 = np.hstack((trans1[[1,2,0,4,5,3]], [0,0,1]))
-        trans1 = trans1.reshape((3,3))
-        trans2 = np.array(ips2.data['trans'])
-        trans2 = np.hstack((trans2[[1,2,0,4,5,3]], [0,0,1]))
-        trans2 = trans2.reshape((3,3))
+        temp = WindowsManager.get(para['temp']).ips
+        rst = gmt.match_multi(imgs, temp.img.getbox())
+        IPy.show_img([rst], ips.title+'-match')
 
-        trans = np.dot(inv(trans1), trans2)[:2][::-1]
-        trans[:,[0,1]] = trans[:,[1,0]]
-        if ips.img.ndim == 2:
-            rst = nimg.affine_transform(ips.img, trans[:,:2], 
-                offset=trans[:,2], output_shape=ips2.size)
-        else:
-            rst = np.zeros(ips2.size+(3,), dtype=np.uint8)
-            for i in (0,1,2):
-                nimg.affine_transform(ips.img[:,:,i], trans[:,:2], 
-                    offset=trans[:,2], output_shape=ips2.size, output=rst[:,:,i])
-        ips = ImagePlus([rst], ips.title+'-trans')
-        ips.data = ips2.data
-        IPy.show_ips(ips)
-
-plgs = [Open, Save, DuplicatePrj, Match]
+plgs = [OpenTif, SaveTif, Match]

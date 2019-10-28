@@ -1,1 +1,1 @@
-Open Geo Roi>{'path': '../../data/landedge.wkt'}
+Open Geo Roi>{'path': '../../data/landedge.shp'}

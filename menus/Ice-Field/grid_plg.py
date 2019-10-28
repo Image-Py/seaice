@@ -33,7 +33,7 @@ class GridValue(Filter):
         idx = np.array(np.where(np.ones((len(lats)-1, len(lons)-1)))).T.reshape((-1,1,2))
         idx = (idx + [(0,0),(1,0),(1,1),(0,1)]).reshape(-1,2).T
         arr = np.array([lons[idx[1]], lats[idx[0]]])
-        trans = np.array(ips.data['trans']).reshape((2,3))
+        trans = ips.img.mat
         arr = np.dot(np.linalg.inv(trans[:,1:]), arr-trans[:,:1]).T
         lines = [[(lons.min(), i),(lons.max(), i)] for i in lats]
         lines += [[(i, lats.min()),(i, lats.max())] for i in lons]

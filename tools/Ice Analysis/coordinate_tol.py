@@ -1,4 +1,5 @@
 from imagepy.core.engine import Tool
+from geonumpy import GeoArray
 from imagepy import IPy
 import numpy as np
 
@@ -12,10 +13,10 @@ class Plugin(Tool):
         pass
     
     def mouse_move(self, ips, x, y, btn, **key):
-        if not 'trans' in ips.info:
+        if not isinstance(ips.img, GeoArray):
             return IPy.set_info('No Coordinate')
-        trans = np.array(ips.info['trans']).reshape((2,3))
-        jw = np.dot(trans[:,1:], (x, y))+ trans[:,0]
+        trans = ips.img.mat
+        jw = np.dot(ips.img.mat[:,1:], (x, y))+ ips.img.mat[:,0]
         IPy.set_info('X:%d Y:%d ==> N:%.4f, E:%.4f'%(x, y, jw[0], jw[1]))
         
     def mouse_wheel(self, ips, x, y, d, **key):

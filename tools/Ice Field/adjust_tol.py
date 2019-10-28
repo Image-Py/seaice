@@ -25,7 +25,7 @@ class Plugin(Tool):
 
     def mouse_down(self, ips, x, y, btn, **key):
         if not 'adjc' in ips.data: ips.data['adjc'] = []
-        lim = 5.0/key['canvas'].get_scale()
+        lim = 5.0/key['canvas'].scale
         if btn==1 and not key['ctrl']:
             self.curobj = self.pick(x, y, ips.data['adjc'], lim)
             if self.curobj!=None: return
@@ -67,7 +67,7 @@ class Plugin(Tool):
             IPy.set_info('X:%d Y:%d ==> N:%.4f, E:%.4f'%(x, y, jw[0], jw[1]))
 
         if not 'adjc' in ips.data: return
-        lim = 5.0/key['canvas'].get_scale()
+        lim = 5.0/key['canvas'].scale
         if btn==None:
             self.cursor = wx.CURSOR_CROSS
             ison = self.pick(x, y, ips.data['adjc'], lim)
@@ -81,7 +81,7 @@ class Plugin(Tool):
         if not self.curobj is None:
             self.curobj[2] = max(5, self.curobj[2] + d)
             return self.update(ips)
-        lim = 5.0/key['canvas'].get_scale()
+        lim = 5.0/key['canvas'].scale
         ison = self.pick(x, y, ips.data['adjc'], lim)
         if not ison is None: 
             ison[3] = max(0, ison[3]+d*0.5)
