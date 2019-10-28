@@ -2,7 +2,7 @@ import wx, osr
 from imagepy.core.engine import Tool
 from imagepy import IPy
 import numpy as np
-from imagepy.core.draw.fill import floodfill
+from skimage.morphology import flood_fill, flood
 from skimage.measure import find_contours
 from imagepy.core.roi.convert import shape2roi, roi2shape
 from shapely.geometry import Polygon, Point
@@ -20,21 +20,19 @@ class Plugin(Tool):
             
     def mouse_down(self, ips, x, y, btn, **key): 
         if btn!=1: return
-        msk = floodfill(ips.img, x, y, 0, False)
+        msk = flood(ips.img, (int(y), int(x)), connectivity=0, tolerance=0)
         conts = find_contours(msk, 0.5, 'high')
         conts = conts[0][:,::-1]
         ips.mark = Mark(conts)
         
 
-        trans = np.array(ips.info['trans']).reshape((2,3))
+        trans = ips.img.mat
         jw = np.dot(trans[:,1:], conts.T).T+ trans[:,0]
 
-        xian = 'PROJCS["Xian 1980 / Gauss-Kruger zone 17", GEOGCS["Xian 1980",DATUM["Xian_1980",SPHEROID["Xian  1980",6378140,298.257,AUTHORITY["EPSG","7049"]],AUTHORITY["EPSG","6610"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4610"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",120],PARAMETER["scale_factor",1],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","2331"]]'
-
         osrprj = osr.SpatialReference()
-        osrprj.ImportFromWkt(ips.info['proj'])
+        osrprj.ImportFromWkt(ips.img.crs)
         osrgeo = osr.SpatialReference()
-        osrgeo.ImportFromWkt(xian)
+        osrgeo.ImportFromEPSG(3857)
         ct = osr.CoordinateTransformation(osrprj, osrgeo)
 
         xy = ct.TransformPoints(jw)
