@@ -1,0 +1,21 @@
+厚度密集度反演工作流
+==================
+## 预处理
+1. Geo TIF Open
+打开影像
+2. Grid Landedge
+加载地缘线
+3. Clear Out
+清除外部
+## 密集度反演
+1. Ice Reflectivity
+反射率反演
+2. Ice Concentraion
+密集度反演
+3. Ice Thickness
+厚度反演
+4. Count Grid Field
+计算网格值
+## 成果保存
+1. Save Fields
+保存反演结果

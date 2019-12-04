@@ -18,10 +18,11 @@ class GridValue(Filter):
             (float, 'latitude_max',(-90,90), 8, 'latitude_max', 'degree'),
             (float, 'latitude_min',(-90,90), 8, 'latitude_min', 'degree'),
             (float, 'latitude_inter',(0,100), 3, 'latitude_inter', 'degree'),
-            (float, 'longtitude_inter',(0,100), 3, 'longtitude_inter', 'degree')]
+            (float, 'longtitude_inter',(0,100), 3, 'longtitude_inter', 'degree'),
+            (float, 'thr', (0,1000), 1, 'threshold', 'value')]
             # (float, 'e', (-100,100), 1, 'eccentricity', 'ratio')
     para = {'longtitude_max':124.5, 'longtitude_min':117.5,'latitude_max':41,
-        'latitude_min':37, 'latitude_inter':0.100,'longtitude_inter':0.100}
+        'latitude_min':37, 'latitude_inter':0.100,'longtitude_inter':0.100, 'thr':0}
     # def load(self, ips):pass
 
     def grid(slef, ips, para):
@@ -75,7 +76,9 @@ class GridValue(Filter):
             msk = polygon(* pts.T[::-1], shape=img.shape[:2])
             inice = icemsk[msk]>0
             if inice.sum()<=len(msk[0])//2: mjd.append(-3)
-            else:mjd.append(img[msk[0][inice], msk[1][inice]].mean())
+            else:
+                value = img[msk[0][inice], msk[1][inice]].mean()
+                mjd.append(value if value>para['thr'] else 0)
             #ips.img[msk[0], msk[1]] = 0
         data = np.array(mjd).reshape(row, col)
         print('value', time()-a)

@@ -4,6 +4,7 @@ from numpy.linalg import norm, inv
 from imagepy.core.engine import Tool, Filter,Simple
 import scipy.ndimage as nimg
 from imagepy.core.mark import GeometryMark
+from geonumpy import GeoArray
 from imagepy import IPy
         
 class Plugin(Tool):
@@ -40,8 +41,8 @@ class Plugin(Tool):
 
         if btn==3:
             cur = self.pick(x, y, ips.data['adjc'], lim)
-            if cur == None or not 'trans' in ips.data: return
-            trans = np.array(ips.data['trans']).reshape((2,3))
+            if cur == None or not isinstance(ips.img, GeoArray): return
+            trans = np.array(ips.img.mat)
             jw = np.dot(trans[:,1:], (cur[0], cur[1]))+ trans[:,0]
             para = {'e':jw[0], 'n':jw[1], 'r':cur[2], 'z':cur[3]}
             view = [(float, 'e', (0, 1e10), 6, 'E', ''),
